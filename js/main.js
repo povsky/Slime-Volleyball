@@ -6,15 +6,15 @@ const ACCEL_X = 0;
 const ACCEL_Y = 0.12;//0.38;
 //const DAMPING = 0.97;
 //const TRACTION = 0.95;
-const DAMPING = 0.97;
-const TRACTION = 0.95;
+const DAMPING = 1;
+const TRACTION = 1;
 const FLOOR_THICKNESS = 70;
 
 const HITBOX_RADIUS = SLIME_RADIUS + BALL_RADIUS;
 
-var ballX = 100;
-var ballY = 200;
-var ballSpeedX = 1;
+var ballX = 250;
+var ballY = 250;
+var ballSpeedX = -5;
 var ballSpeedY = 0;
 
 var bottomLimit;
@@ -158,8 +158,8 @@ function calcSlimeBounce(whichSlime) {
 	
 	var vDotN = dot(V[0],V[1],N[0],N[1]);
 	
-	R[0] = TRACTION*(-2*vDotN*N[0]) + V[0];// + whichSlime.speedX;
-	R[1] = DAMPING*(-2*vDotN*N[1]) + V[1];// + whichSlime.speedY;
+	R[0] = TRACTION*(-2*vDotN*N[0]) + V[0] + whichSlime.speedX;
+	R[1] = DAMPING*(-2*vDotN*N[1]) + V[1] + whichSlime.speedY;
 	
 	ballSpeedX = R[0];
 	ballSpeedY = R[1];
