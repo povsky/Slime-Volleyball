@@ -1,11 +1,10 @@
 
 const SLIME_RADIUS = 40;
-const SLIME_SPEED = 1;
 const JUMP_HEIGHT = 100;
-const SLIME_ACCEL_Y = 0.12;
+const SLIME_ACCEL_Y = 0.75;
 const SLIME_START_X = 200;
 const SLIME_SPEED_X = 5;
-const SLIME_SPEED_Y = 10;
+const SLIME_SPEED_Y = 12;
 
 const SLIME_EYE_RADIUS = 6;
 const SLIME_PUPIL_RADIUS = 4;
@@ -18,25 +17,30 @@ function slimeClass() {
 	this.speedY = 0;
 	this.name = "Slime";
 	this.color = "green";
+	this.side = true;
+	
+	this.rightLimit = 0;
+	this.leftLimit = 0 + SLIME_RADIUS;
 	
 	this.keyHeld_Right = false;
 	this.keyHeld_Left = false;
-	this.keyHeld_Jump = false;
+	this.keyHeld_Up= false;
 	
 	this.controlKeyRight;
 	this.controlKeyLeft;
-	this.controlKeyJump;
+	this.controlKeyUp;
 	
-	this.setupInput = function(rightKey, leftKey, jumpKey) {
+	this.setupInput = function(rightKey, leftKey, upKey) {
 		
 		this.controlKeyRight = rightKey;
 		this.controlKeyLeft = leftKey;
-		this.controlKeyJump = jumpKey;
+		this.controlKeyUp = upKey;
 		
 	}
 	
-	this.reset = function(slimeName,color) {
+	this.reset = function(slimeName,color,side) {
 		
+		this.side = side;
 		this.x = SLIME_START_X;
 		this.y = canvas.height - FLOOR_THICKNESS;
 		this.speedX = 0;
@@ -49,26 +53,37 @@ function slimeClass() {
 	
 	this.move = function() {
 		
-/*		if(this.keyHeld_Right) {
+		if(this.keyHeld_Right) {
 			this.speedX = SLIME_SPEED_X;
-		}else {
-			this.speedX = 0;
+			//console.log("RIGHT KEY HELD");
 		}
 		if(this.keyHeld_Left) {
-			this.speedX = -SLIME_SPEED_X;
-		}else {
+			this.speedX = -1*SLIME_SPEED_X;
+			//console.log("LEFT KEY HELD");
+		}
+		if(this.keyHeld_Left == this.keyHeld_Right) {
 			this.speedX = 0;
 		}
-		if(this.keyHeld_Jump) { 
-			if(this.y > canvas.height - FLOOR_THICKNESS ) {
-				this.speedY = SLIME_SPEED_Y;
+		
+		if(this.keyHeld_Up) { 
+			//console.log("UP KEY HELD"+this.y);
+			if(this.y > canvas.height - FLOOR_THICKNESS - 0.0001) {
+				this.speedY = -SLIME_SPEED_Y;
 			}
-		} */
+		}
 	
 		
 		this.x += this.speedX;
 		this.y += this.speedY;		
 		this.speedY += SLIME_ACCEL_Y;
+		
+		this.calcXLimits();
+		
+		if(this.x < this.leftLimit) {
+			this.x = this.leftLimit;
+		}else if(this.x > this.rightLimit) {
+			this.x = this.rightLimit;
+		}
 		
 		if(this.y > canvas.height - FLOOR_THICKNESS){	
 			this.y = canvas.height - FLOOR_THICKNESS;
@@ -107,5 +122,17 @@ function slimeClass() {
 		
 	}
 	
+	this.calcXLimits = function() {
+		
+		if(this.side) {
+			this.leftLimit = 0 + SLIME_RADIUS;
+			this.rightLimit = canvas.width/2 - SLIME_RADIUS - NET_THICKNESS/2;
+		}else {
+			this.leftLimit = canvas.width/2 + SLIME_RADIUS + NET_THICKNESS/2;
+			this.rightLimit = canvas.width - SLIME_RADIUS;
+		}
+		
+		
+	}
 	
 }

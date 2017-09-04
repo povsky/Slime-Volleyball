@@ -2,19 +2,21 @@
 var canvas, canvasContext;
 
 const BALL_RADIUS = 12;
-const ACCEL_X = 0; 
-const ACCEL_Y = 0.12;//0.38;
+const ACCEL_X = 0;
+const ACCEL_Y = 0.2;//0.38;
 //const DAMPING = 0.97;
 //const TRACTION = 0.95;
 const DAMPING = 1;
 const TRACTION = 1;
 const FLOOR_THICKNESS = 70;
+const NET_THICKNESS = 4;
+const NET_HEIGHT = 50;
 
 const HITBOX_RADIUS = SLIME_RADIUS + BALL_RADIUS;
 
-var ballX = 250;
-var ballY = 250;
-var ballSpeedX = -5;
+var ballX = 200;
+var ballY = 200;
+var ballSpeedX = 0;
 var ballSpeedY = 0;
 
 var bottomLimit;
@@ -44,14 +46,12 @@ function setAreaLimits() {
 function startGame() {
 	
 	setAreaLimits();
-	redSlime.reset("Red Slime","red");
-	whiteSlime.reset("White Slime","purple");
+	redSlime.reset("Red Slime","red",true);
+	whiteSlime.reset("White Slime","white",false);
 	
 	whiteSlime.x = 500;
-	redSlime.speedY = -5;
-	whiteSlime.speedY = -5;
 	
-	var framesPerSecond = 120;
+	var framesPerSecond = 60;
 	setInterval(updateAll,1000/framesPerSecond);
 	
 	setupInput();
@@ -119,7 +119,7 @@ function calcCollisionPointSlime(whichSlime) {
 		
 
 		var angle = calcSlimeAngle(whichSlime);
-		console.log(angle*180/Math.PI);
+		//console.log(angle*180/Math.PI);
 		
 		var prevBallX = ballX - ballSpeedX;
 		var prevBallY = ballY - ballSpeedY;
@@ -129,10 +129,10 @@ function calcCollisionPointSlime(whichSlime) {
 		ballX = HITBOX_RADIUS*Math.cos(angle) + whichSlime.x;
 		ballY = HITBOX_RADIUS*Math.sin(angle) + whichSlime.y;
 		
-		var ratioX = (ballX - prevBallX)/(intBallX - prevBallX + 0.00001);
-		var ratioY = (ballY - prevBallY)/(intBallY - prevBallY + 0.00001);
+		var ratioX = (ballX - prevBallX)/(intBallX - prevBallX + 0.0000001);
+		var ratioY = (ballY - prevBallY)/(intBallY - prevBallY + 0.0000001);
 		
-		console.log(ratioX);
+		//console.log(ratioX);
 		
 		ballSpeedX += ratioX*ACCEL_X;
 		ballSpeedY += ratioY*ACCEL_Y;
@@ -154,21 +154,21 @@ function calcSlimeBounce(whichSlime) {
 	V[0] = ballSpeedX;
 	V[1] = ballSpeedY;
 	
-	console.log(V)
+	//console.log(V)
 	
 	var vDotN = dot(V[0],V[1],N[0],N[1]);
 	
-	R[0] = TRACTION*(-2*vDotN*N[0]) + V[0] + whichSlime.speedX;
-	R[1] = DAMPING*(-2*vDotN*N[1]) + V[1] + whichSlime.speedY;
+	R[0] = TRACTION*(-2*vDotN*N[0]) + V[0];// + whichSlime.speedX;
+	R[1] = DAMPING*(-2*vDotN*N[1]) + V[1];// + whichSlime.speedY;
 	
 	ballSpeedX = R[0];
 	ballSpeedY = R[1];
 	
-	if(Math.abs(ballSpeedX) > 20) {
-		ballSpeedX = Math.sign(ballSpeedX)*20;
+	if(Math.abs(ballSpeedX) > 10) {
+		ballSpeedX = Math.sign(ballSpeedX)*10;
 	}
-	if(Math.abs(ballSpeedY) > 20) {
-		ballSpeedY = Math.sign(ballSpeedY)*20;
+	if(Math.abs(ballSpeedY) > 10) {
+		ballSpeedY = Math.sign(ballSpeedY)*10;
 	}
 	
 	//console.log(N);
@@ -229,10 +229,42 @@ function ballWallHandling() {
 	
 }
 
+function ballNetHandling() {
+	
+	var topNet = canvas.height - FLOOR_THICKNESS - NET_HEIGHT + 10 - BALL_RADIUS;
+	var leftNet = (canvas.width - NET_THICKNESS)/2 - BALL_RADIUS;
+	var rightNet = (canvas.width - NET_THICKNESS)/2 + BALL_RADIUS;
+	
+	
+	if(ballY >= topNet && ballY < topNet + BALL_RADIUS && ballX >= leftNet && ballX < rightNet) {
+		
+		var prevBallY = ballY - ballSpeedY;
+		var prevBallX = ballX - ballSpeedX;
+		var ratio = calcRatio(topNet, prevBallY, ballY);
+		calcBallBounce(ratio, prevBallX, prevBallY, TRACTION, -1*DAMPING);		
+	
+	}else if(ballY >= topNet + BALL_RADIUS && ballX >= leftNet && ballX < canvas.width/2) {
+		
+		var prevBallY = ballY - ballSpeedY;
+		var prevBallX = ballX - ballSpeedX;
+		var ratio = calcRatio(leftNet, prevBallX, ballX);
+		calcBallBounce(ratio, prevBallX, prevBallY, -1*DAMPING, TRACTION);	
+		
+	}else if(ballY >= topNet + BALL_RADIUS && ballX >= canvas.width/2 && ballX < rightNet) {
+		
+		var prevBallY = ballY - ballSpeedY;
+		var prevBallX = ballX - ballSpeedX;
+		var ratio = calcRatio(rightNet, prevBallX, ballX);
+		calcBallBounce(ratio, prevBallX, prevBallY, -1*DAMPING, TRACTION);	
+		
+	}
+}
+
 function moveBall() {
 	
 	ballPositionIterate();
 	
+	ballNetHandling();
 	ballWallHandling();
 	
 	ballSlimeHandling(redSlime);
@@ -254,14 +286,25 @@ function drawBall() {
 	colorCircle(ballX,ballY,BALL_RADIUS,'yellow');
 }
 
+function drawNet() {
+	
+	var topLeftX = (canvas.width - NET_THICKNESS)/2;
+	var topLeftY = (canvas.height - FLOOR_THICKNESS - NET_HEIGHT + 10);
+	colorRect(topLeftX,topLeftY,NET_THICKNESS,NET_HEIGHT,"white");
+	
+}
+
 function drawAll() {
 
 	
 	drawBall();
+	drawNet();
 	redSlime.draw();
 	whiteSlime.draw();
 	
 }
+
+
 
 function dot(a1, a2, b1, b2) {
 
