@@ -45,7 +45,7 @@ function startGame() {
 	
 	setAreaLimits();
 	redSlime.reset("Red Slime","red");
-	whiteSlime.reset("White Slime","purple");
+	whiteSlime.reset("White Slime","white");
 	
 	whiteSlime.x = 500;
 	redSlime.speedY = -5;
